@@ -364,12 +364,8 @@ axes(handles.axes2)
 imshow(J)
 
 function noisy_image = add_salt_and_pepper_noise(image, noise_density)
-    % 输入：
     % image：原始图像，应该是一个二维灰度图或RGB图像
     % noise_density：椒盐噪声的密度，值在 [0, 1] 范围，表示噪声的比例
-    %
-    % 输出：
-    % noisy_image：加了椒盐噪声的图像
 
     % 确保输入的图像为 uint8 类型
     if ~isa(image, 'uint8')
@@ -404,6 +400,107 @@ function pushbutton8_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton8 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global I
+
+% 确保图片已加载
+if isempty(I)
+    msgbox('请先加载图片！', '错误', 'error');
+    return;
+end
+
+% 弹出选择框，选择滤波类型
+choice = menu('请选择滤波类型', '均值滤波', '中值滤波', '高斯滤波');
+
+
+% 根据选择进行相应的操作
+switch choice
+    case 1 % 均值滤波
+        % 调用自定义的均值滤波函数
+        I_filtered = mean_filter(I, 3); %使用 3x3 的滤波器
+        imshow(I_filtered, 'Parent', handles.axes2); % 在 axes1 中显示滤波后的图像
+        title('均值滤波');
+        
+    case 2 % 中值滤波
+        % 调用自定义的中值滤波函数
+        I_filtered = median_filter(I, 3); % 使用 3x3 的滤波器
+        imshow(I_filtered, 'Parent', handles.axes2); % 在 axes1 中显示滤波后的图像
+        title('中值滤波');
+        
+    case 3 % 高斯滤波
+        % 调用自定义的高斯滤波函数
+        I_filtered = gaussian_filter(I, 3, 0.5); % 3x3 的高斯滤波器，sigma=0.5
+        imshow(I_filtered, 'Parent', handles.axes2);
+        title('高斯滤波');
+        
+    otherwise
+        % 如果用户点击了取消
+        msgbox('未选择滤波方式', '信息', 'help');
+end
+
+%均值滤波
+function I_filtered = mean_filter(image, window_size)
+    % 获取图像的尺寸
+    [m, n, c] = size(image);
+    
+    % 创建一个空的输出图像
+    I_filtered = zeros(m, n, c, 'like', image); % 使用'like'来保持数据类型
+    
+    % 计算邻域的一半大小（注意要取整）
+    half_window = floor(window_size / 2);
+    
+    % 遍历图像的每个像素
+    for i = 1:m
+        for j = 1:n
+            % 计算邻域的范围
+            x_start = max(1, i - half_window);
+            x_end = min(m, i + half_window);
+            y_start = max(1, j - half_window);
+            y_end = min(n, j + half_window);
+            
+            % 提取邻域内的像素值
+            neighbor_pixels = image(x_start:x_end, y_start:y_end, :);
+            
+            % 对每个通道分别计算均值
+            for ch = 1:c
+                mean_value = mean(neighbor_pixels(:,:,ch), 'all'); % 只对当前通道求平均值
+                I_filtered(i, j, ch) = mean_value; % 将平均值赋给对应通道的像素
+            end
+        end
+    end
+
+%中值滤波
+function I_filtered = median_filter(I, filter_size) 
+    % 检查filter_size是否为正奇数
+    if mod(filter_size, 2) == 0 || filter_size <= 0
+        error('Filter size must be a positive odd number.');
+    end
+    
+    % 如果是彩色图像，则对每个通道分别进行中值滤波
+    if size(I, 3) == 3
+        I_filtered = zeros(size(I), 'like', I);
+        for c = 1:3
+            I_filtered(:, :, c) = medfilt2(I(:, :, c), [filter_size filter_size]);
+        end
+    else
+        % 如果是灰度图像
+        I_filtered = medfilt2(I, [filter_size filter_size]);
+    end
+
+
+
+%高斯滤波
+function I_filtered = gaussian_filter(I, window_size, sigma)
+    % window_size: 滤波窗口的大小 (如3表示3x3的窗口)
+    % sigma: 高斯核的标准差
+
+    % 创建高斯核
+    kernel = fspecial('gaussian', window_size, sigma);
+    
+    % 对图像进行卷积操作
+    I_filtered = imfilter(I, kernel, 'same');
+    
+    % 转换为uint8格式
+    I_filtered = uint8(I_filtered);
 
 
 % --- Executes on button press in pushbutton20.
@@ -411,6 +508,80 @@ function pushbutton20_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton20 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global I
+
+% 确保图片已加载
+if isempty(I)
+    msgbox('请先加载一张图片！');
+    return;
+end
+
+% 弹出选择框让用户选择滤波类型
+filter_type = questdlg('选择滤波类型', ...
+    '频率滤波', ...
+    '低通滤波', '高通滤波', '带通滤波', '低通滤波');
+
+% 根据选择的滤波类型进行处理
+switch filter_type
+    case '低通滤波'
+        filtered_image = frequency_filter(I, 'low');
+    case '高通滤波'
+        filtered_image = frequency_filter(I, 'high');
+    case '带通滤波'
+        filtered_image = frequency_filter(I, 'bandpass');
+end
+
+% 显示滤波后的图像
+axes(handles.axes2);
+imshow(filtered_image);
+
+
+
+% 频率域滤波函数
+function output_image = frequency_filter(input_image, filter_type)
+% 将图像转换为灰度图像
+gray_image = my_rgb2gray(input_image);
+
+% 将图像转换为频率域（傅里叶变换）
+F = fft2(double(gray_image));
+Fshift = fftshift(F); % 将零频移到频谱的中心
+
+% 获取频谱的大小
+[rows, cols] = size(Fshift);
+
+% 创建频率滤波器
+[u, v] = meshgrid(-floor(cols/2):floor(cols/2)-1, -floor(rows/2):floor(rows/2)-1);
+D = sqrt(u.^2 + v.^2); % 频率的距离
+
+% 设置截止频率
+cutoff_low = 30;  % 低通滤波器的截止频率
+cutoff_high = 50; % 高通滤波器的截止频率
+cutoff_band = [30, 50]; % 带通滤波器的截止频率范围
+
+switch filter_type
+    case 'low'
+        % 低通滤波器
+        H = double(D <= cutoff_low);
+    case 'high'
+        % 高通滤波器
+        H = double(D >= cutoff_high);
+    case 'bandpass'
+        % 带通滤波器
+        H = double(D >= cutoff_band(1) & D <= cutoff_band(2));
+end
+
+% 应用滤波器到频谱
+Fshift_filtered = Fshift .* H;
+
+% 将滤波后的频谱转换回空间域
+F_filtered = ifftshift(Fshift_filtered);
+output_image = ifft2(F_filtered);
+output_image = real(output_image); % 取实部作为输出
+
+% 将输出图像的像素值限制在[0, 255]范围内，并转换为uint8类型
+output_image = uint8(output_image);
+output_image(output_image > 255) = 255;
+output_image(output_image < 0) = 0;
 
 
 % --- Executes on button press in pushbutton6.线性对比度增强
@@ -737,13 +908,13 @@ function pushbutton23_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global I
-% 假设 I 已经是一个有效的图像
 mean = 0;  % 高斯噪声均值
-std_dev = 25;  % 高斯噪声标准差（可以调整强度）
+std_dev = 25;  % 高斯噪声标准差
 J = add_gaussian_noise(I, mean, std_dev);  % 添加高斯噪声
 axes(handles.axes2);  % 将图像显示到 axes2
 imshow(J);  % 显示添加噪声后的图像
 
+%加高斯噪声
 function noisy_image = add_gaussian_noise(image, mean, std_dev)
     if ~isa(image, 'uint8')
         image = im2uint8(image);
@@ -785,7 +956,7 @@ end
 
 % 如果目标图像是彩色图像，则转换为灰度图
 if size(I_target, 3) == 3
-    I_target_gray = rgb2gray(I_target);  % 转换为灰度图像
+    I_target_gray = my_rgb2gray(I_target);  % 转换为灰度图像
 else
     I_target_gray = I_target;  % 已经是灰度图像
 end
