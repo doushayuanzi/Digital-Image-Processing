@@ -99,7 +99,34 @@ function pushbutton15_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton15 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global I I_edge  % 获取原始图像和边缘图像
+[filename,pathname]=uigetfile('*jpg','选择边缘图片');
+path2=[pathname filename];
+I_edge=imread(path2);
+% 检查图像是否加载
+if isempty(I)
+    msgbox('请先打开一张图片！', '错误', 'error');
+    return;
+end
 
+% 如果原始图像是彩色图像，转换为灰度图像
+if size(I, 3) == 3  % 检查是否为彩色图像
+    I_gray = rgb2gray(I);  % 将彩色图像转换为灰度图像
+else
+    I_gray = I;  % 如果本来就是灰度图像，直接使用
+end
+
+% 使用Canny边缘检测
+BW = edge(I_gray, 'Canny');  % Canny边缘检测，BW为二值图像
+
+% 存储提取的目标
+handles.BW = BW;  % 保存目标图像
+guidata(hObject, handles);  % 更新handles
+
+% 显示目标提取后的图像
+axes(handles.axes2);
+imshow(BW);
+title('提取的目标');
 
 % --- Executes on button press in pushbutton16.双线性缩放
 function pushbutton16_Callback(hObject, eventdata, handles)
@@ -325,33 +352,148 @@ function pushbutton13_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in pushbutton9.
+% --- Executes on button press in pushbutton9.Robert算子
 function pushbutton9_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton9 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global I
 
+% 检查图像是否已经加载
+if isempty(I)
+    msgbox('请先打开一张图片！', '错误', 'error');
+    return;
+end
+
+% 将图像转换为灰度图（如果是彩色图像）
+if size(I, 3) == 3
+    I_gray = my_rgb2gray(I);
+else
+    I_gray = I;
+end
+
+% 定义Robert算子的两个卷积核
+Gx = [1 0; 0 -1]; % 水平梯度
+Gy = [0 1; -1 0]; % 垂直梯度
+
+% 对图像应用Robert算子
+Ix = conv2(I_gray, Gx, 'same'); % 水平边缘
+Iy = conv2(I_gray, Gy, 'same'); % 垂直边缘
+
+% 计算边缘强度
+I_edge = sqrt(Ix.^2 + Iy.^2);
+
+% 显示边缘提取后的图像
+axes(handles.axes2)
+imshow(I_edge, [0,10]);  % 强制显示在一定范围内
+title('Robert算子边缘提取');
 
 % --- Executes on button press in pushbutton10.
 function pushbutton10_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton10 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global I
+
+% 检查图像是否已经加载
+if isempty(I)
+    msgbox('请先打开一张图片！', '错误', 'error');
+    return;
+end
+
+% 将图像转换为灰度图
+if size(I, 3) == 3
+    I_gray = my_rgb2gray(I);
+else
+    I_gray = I;
+end
 
 
-% --- Executes on button press in pushbutton11.
+% 定义Prewitt算子的两个卷积核
+Gx = [1 0 -1; 1 0 -1; 1 0 -1];  % 水平梯度
+Gy = [1 1 1; 0 0 0; -1 -1 -1];  % 垂直梯度
+
+% 对图像应用Prewitt算子
+Ix = conv2(I_gray, Gx, 'same'); % 水平边缘
+Iy = conv2(I_gray, Gy, 'same'); % 垂直边缘
+
+% 计算边缘强度
+I_edge = sqrt(Ix.^2 + Iy.^2);
+
+
+% 显示边缘提取后的图像
+axes(handles.axes2)
+imshow(I_edge, [0,35]);
+title('Prewitt算子边缘提取');
+
+% --- Executes on button press in pushbutton11.Sobel算子
 function pushbutton11_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton11 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global I
 
+% 检查图像是否已经加载
+if isempty(I)
+    msgbox('请先打开一张图片！', '错误', 'error');
+    return;
+end
+
+% 将图像转换为灰度图
+if size(I, 3) == 3
+    I_gray = my_rgb2gray(I);
+else
+    I_gray = I;
+end
+
+
+% 定义Sobel算子的两个卷积核
+Gx = [-1 0 1; -2 0 2; -1 0 1];  % 水平梯度
+Gy = [-1 -2 -1; 0 0 0; 1 2 1];  % 垂直梯度
+
+% 对图像应用Sobel算子
+Ix = conv2(I_gray, Gx, 'same'); % 水平边缘
+Iy = conv2(I_gray, Gy, 'same'); % 垂直边缘
+
+% 计算边缘强度
+I_edge = sqrt(Ix.^2 + Iy.^2);
+
+
+% 显示边缘提取后的图像
+axes(handles.axes2)
+imshow(I_edge, [0,70]);
+title('Sobel算子边缘提取');
 
 % --- Executes on button press in pushbutton21.
 function pushbutton21_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton21 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global I
 
+% 检查图像是否已经加载
+if isempty(I)
+    msgbox('请先打开一张图片！', '错误', 'error');
+    return;
+end
+
+% 将图像转换为灰度图
+if size(I, 3) == 3
+    I_gray = my_rgb2gray(I);
+else
+    I_gray = I;
+end
+
+% 定义拉普拉斯算子的卷积核
+L = [0 1 0; 1 -4 1; 0 1 0];
+
+% 对图像应用拉普拉斯算子
+I_edge = conv2(I_gray, L, 'same');
+
+% 显示边缘提取后的图像
+axes(handles.axes2)
+imshow(I_edge, [0,8]);
+title('拉普拉斯算子边缘提取');
 
 % --- Executes on button press in pushbutton7.椒盐噪声
 function pushbutton7_Callback(hObject, eventdata, handles)

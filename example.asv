@@ -330,28 +330,157 @@ function pushbutton9_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton9 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global I
 
+% 检查图像是否已经加载
+if isempty(I)
+    msgbox('请先打开一张图片！', '错误', 'error');
+    return;
+end
+
+% 将图像转换为灰度图（如果是彩色图像）
+if size(I, 3) == 3
+    I_gray = my_rgb2gray(I);
+else
+    I_gray = I;
+end
+
+% 定义Robert算子的两个卷积核
+Gx = [1 0; 0 -1]; % 水平梯度
+Gy = [0 1; -1 0]; % 垂直梯度
+
+% 对图像应用Robert算子
+Ix = conv2(I_gray, Gx, 'same'); % 水平边缘
+Iy = conv2(I_gray, Gy, 'same'); % 垂直边缘
+
+% 计算边缘强度
+I_edge = sqrt(Ix.^2 + Iy.^2);
+
+% 显示边缘提取后的图像
+axes(handles.axes2)
+imshow(I_edge, [0,50]);  % 强制显示在[0, 0.5]范围内
+title('Robert算子边缘提取');
 
 % --- Executes on button press in pushbutton10.
 function pushbutton10_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton10 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global I
 
+% 检查图像是否已经加载
+if isempty(I)
+    msgbox('请先打开一张图片！', '错误', 'error');
+    return;
+end
 
-% --- Executes on button press in pushbutton11.
+% 将图像转换为灰度图（如果是彩色图像）
+if size(I, 3) == 3
+    I_gray = my_rgb2gray(I);
+else
+    I_gray = I;
+end
+
+% 确保图像数据是 double 类型
+I_gray = double(I_gray);
+
+% 定义Prewitt算子的两个卷积核
+Gx = [1 0 -1; 1 0 -1; 1 0 -1];  % 水平梯度
+Gy = [1 1 1; 0 0 0; -1 -1 -1];  % 垂直梯度
+
+% 对图像应用Prewitt算子
+Ix = conv2(I_gray, Gx, 'same'); % 水平边缘
+Iy = conv2(I_gray, Gy, 'same'); % 垂直边缘
+
+% 计算边缘强度
+I_edge = sqrt(Ix.^2 + Iy.^2);
+
+% 增强边缘显示效果
+I_edge = mat2gray(I_edge);  % 将结果缩放到[0, 1]范围
+
+% 显示边缘提取后的图像
+axes(handles.axes2)
+imshow(I_edge, []);
+title('Prewitt算子边缘提取');
+
+% --- Executes on button press in pushbutton11.Sobel算子
 function pushbutton11_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton11 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global I
 
+% 检查图像是否已经加载
+if isempty(I)
+    msgbox('请先打开一张图片！', '错误', 'error');
+    return;
+end
+
+% 将图像转换为灰度图（如果是彩色图像）
+if size(I, 3) == 3
+    I_gray = my_rgb2gray(I);
+else
+    I_gray = I;
+end
+
+% 确保图像数据是 double 类型
+I_gray = double(I_gray);
+
+% 定义Sobel算子的两个卷积核
+Gx = [-1 0 1; -2 0 2; -1 0 1];  % 水平梯度
+Gy = [-1 -2 -1; 0 0 0; 1 2 1];  % 垂直梯度
+
+% 对图像应用Sobel算子
+Ix = conv2(I_gray, Gx, 'same'); % 水平边缘
+Iy = conv2(I_gray, Gy, 'same'); % 垂直边缘
+
+% 计算边缘强度
+I_edge = sqrt(Ix.^2 + Iy.^2);
+
+% 增强边缘显示效果
+I_edge = mat2gray(I_edge);  % 将结果缩放到[0, 1]范围
+
+% 显示边缘提取后的图像
+axes(handles.axes2)
+imshow(I_edge, []);
+title('Sobel算子边缘提取');
 
 % --- Executes on button press in pushbutton21.
 function pushbutton21_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton21 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global I
 
+% 检查图像是否已经加载
+if isempty(I)
+    msgbox('请先打开一张图片！', '错误', 'error');
+    return;
+end
+
+% 将图像转换为灰度图（如果是彩色图像）
+if size(I, 3) == 3
+    I_gray = my_rgb2gray(I);
+else
+    I_gray = I;
+end
+
+% 确保图像数据是 double 类型
+I_gray = double(I_gray);
+
+% 定义拉普拉斯算子的卷积核（这里使用常见的-4版本）
+L = [0 1 0; 1 -4 1; 0 1 0];
+
+% 对图像应用拉普拉斯算子
+I_edge = conv2(I_gray, L, 'same');
+
+% 增强边缘显示效果
+I_edge = mat2gray(I_edge);  % 将结果缩放到[0, 1]范围
+
+% 显示边缘提取后的图像
+axes(handles.axes2)
+imshow(I_edge, []);
+title('拉普拉斯算子边缘提取');
 
 % --- Executes on button press in pushbutton7.椒盐噪声
 function pushbutton7_Callback(hObject, eventdata, handles)
@@ -364,12 +493,8 @@ axes(handles.axes2)
 imshow(J)
 
 function noisy_image = add_salt_and_pepper_noise(image, noise_density)
-    % 输入：
     % image：原始图像，应该是一个二维灰度图或RGB图像
     % noise_density：椒盐噪声的密度，值在 [0, 1] 范围，表示噪声的比例
-    %
-    % 输出：
-    % noisy_image：加了椒盐噪声的图像
 
     % 确保输入的图像为 uint8 类型
     if ~isa(image, 'uint8')
@@ -472,16 +597,8 @@ function I_filtered = mean_filter(image, window_size)
         end
     end
 
-function I_filtered = median_filter(I, filter_size)
-    %MEDIAN_FILTER 对图像进行中值滤波（使用内置函数优化）
-    %
-    % 参数:
-    %   I - 输入的图像（灰度或彩色）
-    %   filter_size - 滤波器窗口的大小，应为正奇数
-    %
-    % 返回值:
-    %   I_filtered - 滤波后的图像
-    
+%中值滤波
+function I_filtered = median_filter(I, filter_size) 
     % 检查filter_size是否为正奇数
     if mod(filter_size, 2) == 0 || filter_size <= 0
         error('Filter size must be a positive odd number.');
@@ -502,7 +619,6 @@ function I_filtered = median_filter(I, filter_size)
 
 %高斯滤波
 function I_filtered = gaussian_filter(I, window_size, sigma)
-    % I: 输入图像
     % window_size: 滤波窗口的大小 (如3表示3x3的窗口)
     % sigma: 高斯核的标准差
 
